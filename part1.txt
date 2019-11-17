@@ -1,0 +1,144 @@
+ubuntu@ip-172-31-20-143:~$ wget https://github.com/ericchiang/containers-from-scratch/releases/download/v0.1.0/rootfs.tar.gz
+--2019-11-14 01:56:14--  https://github.com/ericchiang/containers-from-scratch/releases/download/v0.1.0/rootfs.tar.gz
+Resolving github.com (github.com)... 192.30.255.113
+Connecting to github.com (github.com)|192.30.255.113|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://github-production-release-asset-2e65be.s3.amazonaws.com/71006166/5767750c-92cc-11e6-98bd-64be9b36cd82?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20191114%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20191114T015615Z&X-Amz-Expires=300&X-Amz-Signature=adb7985f472c80e3f8cfc76400674332b18a9c6068a91c8053b3d8175e3de632&X-Amz-SignedHeaders=host&actor_id=0&response-content-disposition=attachment%3B%20filename%3Drootfs.tar.gz&response-content-type=application%2Foctet-stream [following]
+--2019-11-14 01:56:15--  https://github-production-release-asset-2e65be.s3.amazonaws.com/71006166/5767750c-92cc-11e6-98bd-64be9b36cd82?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20191114%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20191114T015615Z&X-Amz-Expires=300&X-Amz-Signature=adb7985f472c80e3f8cfc76400674332b18a9c6068a91c8053b3d8175e3de632&X-Amz-SignedHeaders=host&actor_id=0&response-content-disposition=attachment%3B%20filename%3Drootfs.tar.gz&response-content-type=application%2Foctet-stream
+Resolving github-production-release-asset-2e65be.s3.amazonaws.com (github-production-release-asset-2e65be.s3.amazonaws.com)... 52.216.24.132
+Connecting to github-production-release-asset-2e65be.s3.amazonaws.com (github-production-release-asset-2e65be.s3.amazonaws.com)|52.216.24.132|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 265734209 (253M) [application/octet-stream]
+Saving to: ‘rootfs.tar.gz’
+
+rootfs.tar.gz                    100%[=========================================================>] 253.42M  7.38MB/s    in 42s
+
+2019-11-14 01:56:58 (5.96 MB/s) - ‘rootfs.tar.gz’ saved [265734209/265734209]
+
+ubuntu@ip-172-31-20-143:~$ ls
+rootfs.tar.gz  simple-container
+ubuntu@ip-172-31-20-143:~$ sha256sum rootfs.tar.gz
+c79bfb46b9cf842055761a49161831aee8f4e667ad9e84ab57ab324a49bc828c  rootfs.tar.gz
+ubuntu@ip-172-31-20-143:~$ sudo tar -zxf rootfs.tar.gz
+ubuntu@ip-172-31-20-143:~$ ls rootfs
+bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+ubuntu@ip-172-31-20-143:~$ ls -al rootfs/bin/ls
+-rwxr-xr-x 1 root root 118280 Mar 14  2015 rootfs/bin/ls
+ubuntu@ip-172-31-20-143:~$ sudo chroot rootfs /bin/bash
+root@ip-172-31-20-143:/# ls /
+bin  boot  dev	etc  home  lib	lib64  media  mnt  opt	proc  root  run  sbin  srv  sys  tmp  usr  var
+root@ip-172-31-20-143:/# which python
+/usr/local/bin/python
+root@ip-172-31-20-143:/# /usr/bin/python -c 'print "Hello, container world!"'
+Hello, container world!
+ubuntu@ip-172-31-20-143:~$ sudo chroot rootfs /bin/bash -c "PYTHONHASHSEED=0 python -m http.server 8080"
+Serving HTTP on 0.0.0.0 port 8080 ...
+
+
+
+ubuntu@ip-172-31-20-143:~$ sudo chroot rootfs /bin/bash
+root@ip-172-31-20-143:/# mount -t proc proc /proc
+mount: proc is already mounted or /proc busy
+       proc is already mounted on /proc
+root@ip-172-31-20-143:/# ps aux | grep top
+1000     32489  0.0  0.3  40504  3648 ?        S+   00:57   0:00 top
+root     32494  0.0  0.0  11128   940 ?        S+   00:57   0:00 grep top
+
+root@ip-172-31-20-143:/# exit
+exit
+ubuntu@ip-172-31-20-143:~$ sudo unshare -p -f --mount-proc=$PWD/rootfs/proc \
+>     chroot rootfs /bin/bash
+root@ip-172-31-20-143:/# ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.3  20260  3240 ?        S    01:00   0:00 /bin/bash
+root         3  0.0  0.2  17500  2076 ?        R+   01:00   0:00 ps aux
+
+ubuntu@ip-172-31-20-143:~$ ps aux | grep /bin/bash | grep root
+root     32512  0.0  0.3  55752  3888 pts/0    S    01:10   0:00 sudo unshare -p -f --mount-proc=/home/ubuntu/rootfs/proc chroot rootfs /bin/bash
+root     32513  0.0  0.0   5996   648 pts/0    S    01:10   0:00 unshare -p -f --mount-proc=/home/ubuntu/rootfs/proc chroot rootfs /bin/bash
+root     32514  0.0  0.3  20260  3088 pts/0    S+   01:10   0:00 /bin/bash
+ubuntu@ip-172-31-20-143:~$ sudo ls -l /proc/32514/ns
+total 0
+lrwxrwxrwx 1 root root 0 Nov 17 01:11 cgroup -> cgroup:[4026531835]
+lrwxrwxrwx 1 root root 0 Nov 17 01:11 ipc -> ipc:[4026531839]
+lrwxrwxrwx 1 root root 0 Nov 17 01:11 mnt -> mnt:[4026532161]
+lrwxrwxrwx 1 root root 0 Nov 17 01:11 net -> net:[4026531993]
+lrwxrwxrwx 1 root root 0 Nov 17 01:11 pid -> pid:[4026532167]
+lrwxrwxrwx 1 root root 0 Nov 17 01:11 user -> user:[4026531837]
+lrwxrwxrwx 1 root root 0 Nov 17 01:11 uts -> uts:[4026531838]
+
+ubuntu@ip-172-31-20-143:~$ sudo nsenter --pid=/proc/32514/ns/pid unshare -f --mount-proc=$PWD/rootfs/proc chroot rootfs /bin/bash
+root@ip-172-31-20-143:/# ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.3  20260  3088 ?        S+   01:10   0:00 /bin/bash
+root         2  0.0  0.0   5996   664 ?        S    01:12   0:00 unshare -f --mount-proc=/home/ubuntu/rootfs/proc chroot rootfs /bin/
+root         3  0.0  0.2  20260  3024 ?        S    01:12   0:00 /bin/bash
+root         4  0.0  0.2  17500  2096 ?        R+   01:12   0:00 ps aux
+
+ubuntu@ip-172-31-20-143:~$ mkdir readonlyfiles
+ubuntu@ip-172-31-20-143:~$ echo "hello" > readonlyfiles/hi.txt
+ubuntu@ip-172-31-20-143:~$ sudo mkdir -p rootfs/var/readonlyfiles
+ubuntu@ip-172-31-20-143:~$ sudo mount --bind -o ro $PWD/readonlyfiles $PWD/rootfs/var/readonlyfiles
+ubuntu@ip-172-31-20-143:~$ sudo chroot rootfs /bin/bash
+root@ip-172-31-20-143:/# cat var/readonlyfiles/hi.txt
+hello
+ubuntu@ip-172-31-20-143:~$ sudo umount $PWD/rootfs/var/readonlyfiles
+
+ubuntu@ip-172-31-20-143:~$ ls /sys/fs/cgroup/
+blkio  cpuacct      cpuset   freezer  memory   net_cls,net_prio  perf_event  systemd
+cpu    cpu,cpuacct  devices  hugetlb  net_cls  net_prio          pids
+ubuntu@ip-172-31-20-143:~$ sudo su
+root@ip-172-31-20-143:/home/ubuntu# mkdir /sys/fs/cgroup/memory/demo
+root@ip-172-31-20-143:/home/ubuntu# ls /sys/fs/cgroup/memory/demo
+cgroup.clone_children       memory.kmem.max_usage_in_bytes      memory.limit_in_bytes            memory.stat
+cgroup.event_control        memory.kmem.slabinfo                memory.max_usage_in_bytes        memory.swappiness
+cgroup.procs                memory.kmem.tcp.failcnt             memory.move_charge_at_immigrate  memory.usage_in_bytes
+memory.failcnt              memory.kmem.tcp.limit_in_bytes      memory.numa_stat                 memory.use_hierarchy
+memory.force_empty          memory.kmem.tcp.max_usage_in_bytes  memory.oom_control               notify_on_release
+memory.kmem.failcnt         memory.kmem.tcp.usage_in_bytes      memory.pressure_level            tasks
+memory.kmem.limit_in_bytes  memory.kmem.usage_in_bytes          memory.soft_limit_in_bytes
+root@ip-172-31-20-143:/home/ubuntu# echo "100000000" > /sys/fs/cgroup/memory/demo/memory.limit_in_bytes
+root@ip-172-31-20-143:/home/ubuntu# echo "0" > /sys/fs/cgroup/memory/demo/memory.swappiness
+root@ip-172-31-20-143:/home/ubuntu# echo $$ > /sys/fs/cgroup/memory/demo/tasks
+root@ip-172-31-20-143:/home/ubuntu# vim demo.py
+root@ip-172-31-20-143:/home/ubuntu# python demo.py
+10mb
+20mb
+30mb
+40mb
+50mb
+60mb
+70mb
+80mb
+Killed
+root@ip-172-31-20-143:/home/ubuntu# exit
+exit
+ubuntu@ip-172-31-20-143:~$ sudo rmdir /sys/fs/cgroup/memory/demo
+
+
+ubuntu@ip-172-31-20-143:~$ vim demo.go
+ubuntu@ip-172-31-20-143:~$ go build -o listen demo.go
+ubuntu@ip-172-31-20-143:~$ ./listen
+listen tcp :80: bind: permission denied
+ubuntu@ip-172-31-20-143:~$ sudo setcap cap_net_bind_service=+ep listen
+ubuntu@ip-172-31-20-143:~$ getcap listen
+listen = cap_net_bind_service+ep
+ubuntu@ip-172-31-20-143:~$ ./listen
+success
+
+ubuntu@ip-172-31-20-143:~$ sudo su
+root@ip-172-31-20-143:/home/ubuntu# capsh --print
+Current: = cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_linux_immutable,cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_net_raw,cap_ipc_lock,cap_ipc_owner,cap_sys_module,cap_sys_rawio,cap_sys_chroot,cap_sys_ptrace,cap_sys_pacct,cap_sys_admin,cap_sys_boot,cap_sys_nice,cap_sys_resource,cap_sys_time,cap_sys_tty_config,cap_mknod,cap_lease,cap_audit_write,cap_audit_control,cap_setfcap,cap_mac_override,cap_mac_admin,cap_syslog,cap_wake_alarm,cap_block_suspend,37+ep
+Bounding set =cap_chown,cap_dac_override,cap_dac_read_search,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_linux_immutable,cap_net_bind_service,cap_net_broadcast,cap_net_admin,cap_net_raw,cap_ipc_lock,cap_ipc_owner,cap_sys_module,cap_sys_rawio,cap_sys_chroot,cap_sys_ptrace,cap_sys_pacct,cap_sys_admin,cap_sys_boot,cap_sys_nice,cap_sys_resource,cap_sys_time,cap_sys_tty_config,cap_mknod,cap_lease,cap_audit_write,cap_audit_control,cap_setfcap,cap_mac_override,cap_mac_admin,cap_syslog,cap_wake_alarm,cap_block_suspend,37
+Securebits: 00/0x0/1'b0
+ secure-noroot: no (unlocked)
+ secure-no-suid-fixup: no (unlocked)
+ secure-keep-caps: no (unlocked)
+uid=0(root)
+gid=0(root)
+groups=0(root)
+root@ip-172-31-20-143:/home/ubuntu# sudo capsh --drop=cap_chown,cap_setpcap,cap_setfcap,cap_sys_admin --chroot=$PWD/rootfs --
+root@ip-172-31-20-143:/# whoami
+root
+root@ip-172-31-20-143:/# chown nobody /bin/ls
+chown: changing ownership of '/bin/ls': Operation not permitted
