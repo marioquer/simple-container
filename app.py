@@ -35,7 +35,7 @@ List container instance
 '''
 @app.route('/list', methods=['GET'])
 def list_container():
-    return manager.list_container
+    return manager.list_container()
 
 
 '''
