@@ -17,6 +17,8 @@ response = requests.post(url, json=launch_data)
 if(response.status_code == 200):
     return_data = response.json()
     print("Success: " + return_data["instance"])
+    exit(0)
 else:
     print("Failure: Have better error checking than this sample pls")
+    exit(1)
 

@@ -1,5 +1,19 @@
 #!/usr/bin/python3
+import requests, json, os, sys
 
-print("tiny-1-1.cfg")
-print("tiny-2-2.cfg")
-print("tiny-3-3.cfg")
+HOSTNAME = "localhost"
+PORT = "8080"
+
+url = "http://" + HOSTNAME + ":" + PORT + "/cfginfo"
+
+response = requests.get(url)
+
+if(response.status_code == 200):
+    return_data = response.json()
+    # print configfiles per line
+    with open(sys.argv[2], 'w') as f:
+        for config_file in return_data.get('files'):
+            f.write(config_file + "\n")
+    exit(0)
+else:
+    exit(1)

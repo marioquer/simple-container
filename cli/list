@@ -1,4 +1,22 @@
 #!/usr/bin/python3
+import requests, json, os, sys
 
-print("fake instance name")
-print("another fake instance name")
+HOSTNAME = "localhost"
+PORT = "8080"
+
+url = "http://" + HOSTNAME + ":" + PORT + "/list"
+
+response = requests.get(url)
+
+if(response.status_code == 200):
+    return_data = response.json()
+    # print configfiles per line
+    with open(sys.argv[2], 'w') as f:
+        for instance_info in return_data.get('instances'):
+            instance_name = instance_info.get("instance")
+            config_filename = instance_info.get('name') + '-' + instance_info.get('major') + '-' \
+                + instance_info.get('minor') + '.cfg'
+            f.write(instance_name + ': {' + config_filename + '}\n')
+    exit(0)
+else:
+    exit(1)

@@ -1,3 +1,20 @@
 #!/usr/bin/python3
+import requests, json, os, sys
 
-exit(0)
+HOSTNAME = "localhost"
+PORT = "8080"
+
+url = "http://" + HOSTNAME + ":" + PORT + "/config"
+
+# read file into dictionary
+with open(sys.argv[1]) as json_file:
+    config_data = json.load(json_file)
+
+response = requests.post(url, json=config_data)
+
+if(response.status_code == 200):
+    exit(0)
+else:
+    exit(1)
+
+
