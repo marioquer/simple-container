@@ -108,3 +108,8 @@ venv.bak/
 base_images/*
 
 .vscode/
+
+configs/
+containers/
+
+index.html*

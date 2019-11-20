@@ -1,7 +1,7 @@
 from flask import Flask, escape, request
 import os
 import sys
-import manager
+from manager import *
 
 app = Flask(__name__)
 manager = None
@@ -55,5 +55,5 @@ def destroy_all():
 
 
 if __name__ == "__main__":
-    manager = manager.Manager(sys.argv)
+    manager = Manager()
     app.run(host=sys.argv[1], port=sys.argv[2], threaded=False)
