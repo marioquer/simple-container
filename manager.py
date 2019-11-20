@@ -68,8 +68,6 @@ class Manager():
         except ValueError:
             return '', 409
 
-        print(self.config_files)
-
         # if configfiles does not exist - 404 not found
         filename = argv_dict.get('name') + '-' + argv_dict.get('major') + '-' \
             + argv_dict.get('minor') + '.cfg'
@@ -148,7 +146,6 @@ class Manager():
 
         for mnt_point in sorted_list:
             cmd = 'sudo umount containers/{}/*{}'.format(name, mnt_point)
-            print(cmd)
             os.system(cmd)
         shutil.rmtree('containers/{}'.format(name))
 
@@ -188,7 +185,6 @@ class Manager():
             # sys.exit(0)
         else:
             # parent process, add process pid to map
-            print(pid)
             self.running_containers_pid_map[container_name] = pid
             self.running_containers_mnt_point_map[container_name] = mnt_point_list
             time.sleep(5)
@@ -216,6 +212,4 @@ if __name__ == "__main__":
     }
     manager.add_config(bytes(json.dumps(argv), 'utf8'))
     response, status = manager.launch(bytes(json.dumps(launch_argv), 'utf8'))
-    print(response)
-    print(status)
     # manager.destroy_container(response['instance'])

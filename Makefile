@@ -5,23 +5,24 @@ download:
 install:
 	# Put any compilation instructions here if required
 	# Any third party installations shuld also occur here
-	python3 -m venv venv
-	source venv/bin/activate
-	pip install flask requests
+	sudo apt-get update
+	sudo apt-get install -y python3-pip
+	pip install --upgrade pip
+	pip3 install flask requests
 
 manager:
 	# Put instruction to run your manager here
-	source venv/bin/activate
-	python3 app.py localhost 8080
+	python3 app.py localhost 8080 &
+	sleep 2
 
 clean:
 	# Remove all config files stored by the manager in it's lifetime
 	# and kill the manager process
+	./destroy_tiny.sh > /dev/null 2>&1
+	./destroy.sh > /dev/null 2>&1
 	sudo rm -rf configs
 	mkdir configs
-	sudo kill -9 $(ps aux | grep unshare | awk '{print $2}')
-	sudo kill -9 $(ps aux | grep python | awk '{print $2}')
-	sudo kill -9 $(ps aux | grep tiny | awk '{print $2}')
+	pkill python || true
 
 cli_tests: clean manager
 	./grading/cli_tests/test_1_upload.sh
@@ -31,7 +32,4 @@ cli_tests: clean manager
 	./grading/cli_tests/test_5_destroyall.sh
 
 api_tests: clean manager
-	python3 grading/rest/grading.py 
-
-	
-	
+	python3 grading/rest/grading.py
